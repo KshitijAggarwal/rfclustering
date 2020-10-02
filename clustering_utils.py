@@ -15,56 +15,65 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
     assert cluster_function
 
     # cluster 
+    
     clusterer = cluster_function(**kwargs).fit(data)
     tl = l
     cl = clusterer.labels_
 
-    arand = metrics.adjusted_rand_score(tl, cl)
-#     ami = metrics.adjusted_mutual_info_score(tl, cl)
-#     v = metrics.v_measure_score(tl, cl)
-#     fm = metrics.fowlkes_mallows_score(tl, cl)
-    h = metrics.homogeneity_score(tl, cl)
-
-    # for each cluster containing an FRB candidate, calculate its precision
+    # for each cluster containing an FRB candidate, calculate its homogenity
     # defined as number of FRB candidates in that cluster/total number of candidates in that cluster
-    # this is to favor clusters which just have FRB and less RFI
-    # excluding unclustered candidates
-    # if FRB is just unclustered, then precision = 1? 
-    
-    cluster_labels_frb = list(set(cl[tl == 1]))
-#     a = []
-    precision = []
-    if len(cluster_labels_frb) == 1 and cluster_labels_frb[0] == -1:
-            precision.append(0)
+    # this is to favor clusters which just have FRB and less RFI excluding unclustered candidates    
+    # total homogenity is the weighted mean of all homogenities    
+    cluster_labels_frb = np.array(list(set(cl[tl == 1])))
+    nfrb_cands = (tl == 1).sum()
+
+    nfrb_c = 0 # total number of frbs in frb clusters
+    ntot_c = 0 # total number of candidates in frb clusters
+    for cluster in cluster_labels_frb:
+        if cluster == -1:
+            continue
+        indexes = np.where(cl == cluster)[0]
+        groundtruth_labels = np.take(tl, indexes)
+        ntot = len(groundtruth_labels)
+        nfrb = (groundtruth_labels == 1).sum()
+        ntot_c += ntot
+        nfrb_c += nfrb        
+    if ntot_c == 0:
+        assert len(cluster_labels_frb) == 1
+        assert cluster_labels_frb[0] == -1
+        homogenity_frbs = 0
     else:
-        for c in cluster_labels_frb:
-            if c == -1:
-                continue
-            indexes = np.where(cl == c)[0]
-            base_labels = np.take(tl, indexes)
-            precision.append((base_labels == 1).sum()/len(base_labels))
-#             a.append(indexes)        
+        homogenity_frbs = nfrb_c/ntot_c
 
-    p = np.prod(precision, axis=0)
+    # for each cluster containing an FRB candidate, calculate its completeness. 
+    # defined as number of frbs in that cluster/total number of FRBs
+    # total completeness is the weighted mean of all completeness 
+    # this is to ensure minimum number of FRB clusters
+    
+    c = 0 # completeness for FRB clusters
+    ntot_c = 0
+    for cluster in cluster_labels_frb:
+        indexes = np.where(cl == cluster)[0]
+        groundtruth_labels = np.take(tl, indexes)
+        ntot = len(groundtruth_labels)
+        nfrb = (groundtruth_labels == 1).sum()
+        ntot_c += ntot
+        c += nfrb*ntot
 
+    completenes_frbs = c/(nfrb_cands*ntot_c)
+    v_measure = 2*homogenity_frbs*completenes_frbs/(completenes_frbs+homogenity_frbs)
+    
     if debug:
-        print(f'Precisions are {precision}, and clusters with FRBs are:{cluster_labels_frb}')    
         print(file)
-        print(f'Adjusted rand score are: {arand}')
-#         print(f'Adjusted MI score are: {ami}')
-        print(f'Homogenity score is: {h}')
-#         print(f'V measures are: {v}')
-#         print(f'FM score are: {fm}')
-        print(f'Precision of FRB clusters is: {p}')
+        print(f'Homogenity of FRBs is {homogenity_frbs}')
+        print(f'Completeness of FRBs is {completenes_frbs}')
+        print(f'Harmonic mean of these two is {v_measure}')
 
     if plot:
         plot_data(data, cl, s)
     
     true_labels = tl
     cluster_labels = cl
-
-    N_clusters = np.max(clusterer.labels_ + 1) # excluding unclustered candidates
-    N_unclustered = (cluster_labels == -1).sum()
         
     # check if the FRB candidate is recovered or not (after taking the max snr element of each cluster)
     clusters = cluster_labels
@@ -82,7 +91,6 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
 
     # i think if this contains 1 i.e FRB candidate, that means that FRB wasn't missed,
     # and some FRB plots will be generated
-    
     # Take indexes of rank 1 candididates (from calcinds) in true_labels, and see if 
     # label 1 is in there. If yes, then FRB candidate will pass through in one
     # or more clusters
@@ -90,34 +98,8 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
         frb_found = True
     else:
         frb_found = False
-    
-    actual_frb_indx = np.where(true_labels == 1)[0]
-    frb_cand_clustering_labels = np.take(cluster_labels, actual_frb_indx)
-    
-    # clustering
-    N_inspect = N_clusters + N_unclustered
-
-    # pipeline (N_tot, N_frb_cands, N_frb_cluster > 0)
-    N_tot = len(true_labels)
-    N_frb_cands = (true_labels == 1).sum()
-    # number of clusters all the FRB candidates are a part of. This doesn't mean that those clusters will 
-    # have an FRB candidate as the max snr candidate. 
-    # Therefore, N_frb_cluster may not be equal to (np.take(true_labels, calcinds) == 1).sum()
-    N_frb_cluster = len(np.unique(frb_cand_clustering_labels[frb_cand_clustering_labels > -1
-                                                            ])) + (frb_cand_clustering_labels == -1).sum()    
-    
-    # total (0 < n_c < 1, 0 < n_frb_c < 1)
-    n_c = N_inspect/N_tot
-    n_frb_c = N_frb_cluster/N_frb_cands    
-    
-    # thresholding the values to 0.9, so that 1 - n_c or 1 - n_frb_c doesn't shrink to zero.
-    if n_frb_c > 0.9: 
-        n_frb_c = 0.9
-        
-    if n_c > 0.9: 
-        n_frb_c = 0.9
-    
-    return n_c, n_frb_c, frb_found, arand, h, p
+       
+    return len(true_labels), frb_found, homogenity_frbs, completenes_frbs, v_measure
 
 
 def get_data(pkl, frac=1, label=1):
