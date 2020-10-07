@@ -25,9 +25,10 @@ search_space_kmeans.append(Categorical([1996], name='random_state'))
 search_space_AP = list()
 # maybe play with preference value a little bit? can even be negative, very sensitive to it
 search_space_AP.append(Real(0.5, 1, name='damping'))
-search_space_AP.append(Categorical(['euclidean’, ‘precomputed'], name='affinity'))
-search_space_AP.append(Integer(10, 20, name='convergence_iter', dtype=int))
-search_space_AP.append(Categorical('int', name='random_state'))
+search_space_AP.append(Categorical(['euclidean'], name='affinity'))
+# search_space_AP.append(Integer(10, 20, name='convergence_iter', dtype=int))
+# search_space_AP.append(Categorical([1996], name='random_state'))
+search_space_AP.append(Integer(-1000, -200, name='preference', dtype=int))
 
 
 search_space_dbscan = list()
@@ -37,3 +38,8 @@ search_space_dbscan.append(Categorical(['euclidean', 'hamming', 'chebyshev', 'ci
                                         'manhattan', 'canberra'], name='metric'))
 search_space_dbscan.append(Categorical(['auto'], name='algorithm'))
 search_space_dbscan.append(Integer(10, 50, name='leaf_size', dtype=int))
+
+search_space_MS = list()
+search_space_MS.append(Integer(10, 40, name='bandwidth'))
+search_space_MS.append(Categorical([True, False], name='bin_seeding'))
+search_space_MS.append(Categorical([True, False], name='cluster_all'))
