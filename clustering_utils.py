@@ -5,12 +5,20 @@ import glob, logging, os
 from sklearn import metrics
 from cluster_plot import plot_data
 
-def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False, **kwargs):
-    f = np.load(file)
-    d = f['cands']
-    l = f['labels']
-    s = f['snrs']
-    data = d
+def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=False, **kwargs):
+    if isinstance(cand, dict): 
+        d = cand['cands']
+        l = cand['labels']
+        s = cand['snrs']
+        data = d        
+    else:
+        f = np.load(cand)
+        if debug:
+            print(cand)
+        d = f['cands']
+        l = f['labels']
+        s = f['snrs']
+        data = d
 
     assert cluster_function
 
@@ -24,6 +32,8 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
     # defined as number of FRB candidates in that cluster/total number of candidates in that cluster
     # this is to favor clusters which just have FRB and less RFI excluding unclustered candidates    
     # total homogenity is the weighted mean of all homogenities    
+    # weighted by number of candidates in that cluster
+    # excludes unclustered candidates
     cluster_labels_frb = np.array(list(set(cl[tl == 1])))
     nfrb_cands = (tl == 1).sum()
 
@@ -49,6 +59,8 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
     # defined as number of frbs in that cluster/total number of FRBs
     # total completeness is the weighted mean of all completeness 
     # this is to ensure minimum number of FRB clusters
+    # weighted by number of candidates in that cluster
+    # includes unclustered candidates
     
     c = 0 # completeness for FRB clusters
     ntot_c = 0
@@ -61,10 +73,13 @@ def calculate_metric_terms(file, cluster_function=None, plot=False, debug=False,
         c += nfrb*ntot
 
     completenes_frbs = c/(nfrb_cands*ntot_c)
+    
+    # v measure is the harmonic mean of homogenity and completeness to make 
+    # sure that both are high and weighted equally
+    
     v_measure = 2*homogenity_frbs*completenes_frbs/(completenes_frbs+homogenity_frbs)
     
     if debug:
-        print(file)
         print(f'Homogenity of FRBs is {homogenity_frbs}')
         print(f'Completeness of FRBs is {completenes_frbs}')
         print(f'Harmonic mean of these two is {v_measure}')
