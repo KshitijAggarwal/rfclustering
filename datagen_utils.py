@@ -59,9 +59,14 @@ def save_one_wrt_rfi_frac(clean_pkl, rfi_pkl=None, rfi_frac=None, outdir = 'data
     data = np.concatenate((r_data_use, c_data))
     labels = np.concatenate((r_labels_use, c_labels))
     snrs = np.concatenate((r_snrs_use, c_snrs))
+    
+    if len(snrs) < 10:
+        return None
+    
     name = f'clean_{len(c_data)}_rfi_{len(r_labels_use)}_frac_{rfi_frac:f}.npz'
 
     d, l, s = unison_shuffled_copies(data, labels, snrs)
     
     np.savez(outdir + name, cands=d, labels=l, snrs=s)
     return name
+

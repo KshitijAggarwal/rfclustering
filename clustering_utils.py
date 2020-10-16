@@ -47,7 +47,7 @@ def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=F
         ntot = len(groundtruth_labels)
         nfrb = (groundtruth_labels == 1).sum()
         ntot_c += ntot
-        nfrb_c += nfrb        
+        nfrb_c += nfrb
     if ntot_c == 0:
         assert len(cluster_labels_frb) == 1
         assert cluster_labels_frb[0] == -1
