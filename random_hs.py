@@ -38,7 +38,7 @@ def model(**params):
     c_avg = np.average(cs, axis=0, weights=ncands)
     h_avg = np.average(hs, axis=0, weights=ncands)
     v_avg = np.average(vs, axis=0, weights=ncands)
-    recall = N_frb/len(files)
+    recall = N_frb/len(vs)
     score = v_avg*recall
 
     return score
@@ -48,9 +48,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run random sampling on the dataset using a specified method",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-a', '--algorithm', help='Clustering algorithm to use (hdbscan, dbscan, kmeans, affinity_prop, '
-                       'meanshift, agglo)', required=True, type=str)
+                       'meanshift, agglo, sc, optics, birch)', required=True, type=str)
     parser.add_argument('-o', '--outdir', help='Output directory', required=False, type=str, 
                         default='/hyrule/data/users/kshitij/hdbscan/rfclustering/hs_results/')
+    parser.add_argument('-d', '--data', help='path of test data', required=True, type=str)
+    parser.add_argument('-e', '--ext', help='Extension to the outname', required=True, type=str)    
     values = parser.parse_args()  
     
     print("Input Arguments:-")
@@ -78,10 +80,19 @@ if __name__ == '__main__':
     elif values.algorithm == 'agglo':
         list_of_samples = hs_utils.search_space_agglo()
         cluster_function = cluster.AgglomerativeClustering        
+    elif values.algorithm == 'sc':
+        list_of_samples = hs_utils.search_space_sc()
+        cluster_function = cluster.SpectralClustering
+    elif values.algorithm == 'optics':
+        list_of_samples = hs_utils.search_space_optics()
+        cluster_function = cluster.OPTICS
+    elif values.algorithm == 'birch':
+        list_of_samples = hs_utils.search_space_birch()
+        cluster_function = cluster.Birch
     else:
         print("Can't run this algorithm")
         
-    files = glob.glob('/hyrule/data/users/kshitij/hdbscan/rfclustering/test_data_200/*npz')
+    files = glob.glob(f'{values.data}/*npz')
     candlist = []
     for file in files:
         f = np.load(file)
@@ -99,8 +110,8 @@ if __name__ == '__main__':
         dict_with_score['score'] = s
         outlist.append(dict_with_score)
         if not i%100:
-            with open(f'{values.outdir}/test_{values.algorithm}.json', 'w') as fout:
+            with open(f'{values.outdir}/test_{values.algorithm}_{values.ext}.json', 'w') as fout:
                 json.dump(outlist, fout, indent=4)
 
-    with open(f'{values.outdir}/{values.algorithm}_result_grid.json', 'w') as fout:
+    with open(f'{values.outdir}/{values.algorithm}_{values.ext}_result_grid.json', 'w') as fout:
         json.dump(outlist, fout, indent=4)

@@ -64,22 +64,27 @@ def search_space_hdbscan():
 
 
 def search_space_dbscan():
-    n = 6000
+    n = 5000
     param_d = {}
     param_d['min_samples'] = ['int', 2, 10]
-    param_d['eps'] = ['float', 0.5, 10]
-    param_d['metric'] = ['cat', 'euclidean', 'chebyshev', 'cityblock', 'manhattan', 
-                         'canberra']
+    param_d['eps'] = ['float', 0.5, 15]
+    param_d['metric'] = ['cat', 'euclidean', 'chebyshev', 'cityblock', 'manhattan']
     param_d['algorithm'] = ['cat', 'auto']
     param_d['leaf_size'] = ['int', 20, 40]
     ls1 = get_list_of_samples(param_d, n)
     
-    n = 2000
-    param_d['eps'] = ['float', 0.01, 1]
-    param_d['metric'] = ['cat', 'hamming']
+    n = 1000
+    param_d['eps'] = ['float', 0.1, 4]
+    param_d['metric'] = ['cat', 'canberra']
     ls2 = get_list_of_samples(param_d, n)
     
-    return ls1 + ls2
+    n = 1000
+    param_d['eps'] = ['float', 0.1, 1]
+    param_d['metric'] = ['cat', 'hamming']
+
+    ls3 = get_list_of_samples(param_d, n)
+    
+    return ls1 + ls2 + ls3
 
 
 def search_space_ap():
@@ -88,6 +93,7 @@ def search_space_ap():
     param_d['damping'] = ['float', 0.5, 1]
     param_d['affinity'] = ['cat', 'euclidean']
     param_d['preference'] = ['int', -1000, -200]
+    param_d['random_state'] = ['int', 1996] # mgiht break 
     return get_list_of_samples(param_d, n)
 
 
@@ -100,12 +106,28 @@ def search_space_ms():
     return get_list_of_samples(param_d, n)
 
 
+# might break, testing now. Seems unreliable and non reproducible. 
+def search_space_sc():
+    n = 1000
+    param_d = {}
+    param_d['n_clusters'] = ['int', 2, 9]
+    # param_d['n_components'] = ['int', 2, 10]
+    param_d['eigen_solver'] = ['cat', 'arpack']# 'lobpcg'] #maybe remove lobpcg
+    param_d['random_state'] = ['int', 1996]
+    param_d['gamma'] = ['loguniform_int', 10**(-7), 10**(-2)]
+    param_d['affinity'] = ['cat', 'nearest_neighbors', 'rbf'] 
+#                            'additive_chi2',
+#                            'chi2', 'linear', 'poly', 'laplacian', 'sigmoid', 
+#                            'cosine']
+    param_d['assign_labels'] = ['cat', 'kmeans', 'discretize']
+    return get_list_of_samples(param_d, n)
+
+
 def search_space_agglo():
     n = 400 
     param_d ={}
     param_d['n_clusters'] = ['int', 2, 10]
-    param_d['affinity'] = ['cat', 'euclidean', 'l1', 'l2', 
-                           'manhattan', 'cosine']
+    param_d['affinity'] = ['cat', 'euclidean', 'manhattan', 'cosine']
     param_d['compute_full_tree'] = ['cat', 'auto']
     param_d['linkage'] = ['cat', 'complete', 'average', 'single']
     ls1 = get_list_of_samples(param_d, n)
@@ -116,3 +138,45 @@ def search_space_agglo():
     ls2 = get_list_of_samples(param_d, n)
 
     return ls1 + ls2    
+
+
+def search_space_optics():
+    n = 2000 # 8*1*15*(15 + 10*10) = 13800
+    param_d = {}
+    param_d['min_samples'] = ['int', 2, 10]
+    param_d['metric'] = ['cat', 'minkowski']
+    param_d['p'] = ['float', 1, 15]
+  
+    param_d['cluster_method'] = ['cat', 'dbscan', 'xi']
+    param_d['eps'] = ['float', 0.5, 15]
+    param_d['xi'] = ['float', 0, 1]
+    param_d['min_cluster_size'] = ['int', 2, 10]
+
+    ls1 = get_list_of_samples(param_d, n)
+    
+    n = 4000
+    param_d['metric'] = ['cat', 'euclidean', 'chebyshev', 
+                         'cityblock', 'manhattan']
+    ls2 = get_list_of_samples(param_d, n)
+    
+    n = 1000
+    param_d['metric'] = ['cat', 'hamming']
+    param_d['eps'] = ['float', 0.1, 1]
+    ls3 = get_list_of_samples(param_d, n)
+
+    n = 1000
+    param_d['metric'] = ['cat', 'canberra']
+    param_d['eps'] = ['float', 0.1, 4]
+    ls4 = get_list_of_samples(param_d, n)
+    
+    return ls1 + ls2 + ls3 + ls4
+
+
+def search_space_birch():
+    n = 5000  # 20*80*10 = 16000
+    param_d = {}
+    param_d['threshold'] = ['float', 0.1, 20]
+    param_d['branching_factor'] = ['int', 10, 100]
+    param_d['n_clusters'] = ['int', 2, 10]
+    
+    return get_list_of_samples(param_d, n)
