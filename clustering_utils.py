@@ -117,10 +117,10 @@ def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=F
     return len(true_labels), frb_found, homogenity_frbs, completenes_frbs, v_measure
 
 
-def get_data(pkl, frac=1, label=1):
+def get_data(pkl, downsample, frac=1, label=1):
     cc = list(candidates.iter_cands(pkl, 'candcollection'))[0]
     logging.info(f'Processing {os.path.split(pkl)[0]}')
-    _data = prep_to_cluster(cc)
+    _data = prep_to_cluster(cc, downsample=downsample)
     _snrs = cc.array['snr1']
 
     size = frac*_data.shape[0]

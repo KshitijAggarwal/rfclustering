@@ -1,17 +1,17 @@
 import numpy as np
 from clustering_utils import unison_shuffled_copies, get_data
+import os
 
-
-def save_one(clean_pkl, rfi_pkl=None, rfi_frac=None, outdir = 'dataset/'):
+def save_one(clean_pkl, rfi_pkl=None, rfi_frac=None, downsample=1, outdir = 'dataset/'):
     c_pkl = clean_pkl
-    c_data, c_labels, c_snrs = get_data(c_pkl, 1, 1)
+    c_data, c_labels, c_snrs = get_data(c_pkl, downsample, frac=1, label=1)
 
     if rfi_pkl:
         rand_rfi_pkl = rfi_pkl
         if not rfi_frac: 
             rfi_frac = np.random.uniform(0.2, 1)
         r_pkl = rand_rfi_pkl
-        r_data, r_labels, r_snrs = get_data(r_pkl, rfi_frac, -1)
+        r_data, r_labels, r_snrs = get_data(r_pkl, downsample, frac=rfi_frac, label=-1)
     
         data = np.concatenate((r_data, c_data))
         labels = np.concatenate((r_labels, c_labels))
@@ -34,22 +34,22 @@ def save_one(clean_pkl, rfi_pkl=None, rfi_frac=None, outdir = 'dataset/'):
     return name
 
 
-def save_one_wrt_rfi_frac(clean_pkl, rfi_pkl=None, rfi_frac=None, outdir = 'dataset/'):
+def save_one_wrt_rfi_frac(clean_pkl, rfi_pkl=None, rfi_frac=None, downsample=1, outdir = 'dataset/'):
     c_pkl = clean_pkl
-    c_data, c_labels, c_snrs = get_data(c_pkl, 1, 1)
+    c_data, c_labels, c_snrs = get_data(c_pkl, downsample, frac=1, label=1)
 
     rand_rfi_pkl = rfi_pkl
     r_pkl = rand_rfi_pkl
-    r_data, r_labels, r_snrs = get_data(r_pkl, 1, -1)
+    r_data, r_labels, r_snrs = get_data(r_pkl, downsample, frac=1, label=-1)
 
+    n_frb = c_data.shape[0] 
+    n_rfi = r_data.shape[0]
     if not rfi_frac:
-        n_frb = c_data.shape[0] 
-        n_rfi = r_data.shape[0]
         max_rfi_frac = n_rfi / (n_frb + n_rfi)
         rfi_frac = np.random.uniform(0.1, max_rfi_frac)
-        size = rfi_frac*n_frb/(1-rfi_frac)
-        if size > n_rfi:
-            return None
+    size = rfi_frac*n_frb/(1-rfi_frac)
+    if size > n_rfi:
+        return None
         
     indx = np.random.choice(r_data.shape[0], size=int(size), replace=False)
     r_data_use = np.take(r_data, indx, axis=0)    
@@ -68,5 +68,4 @@ def save_one_wrt_rfi_frac(clean_pkl, rfi_pkl=None, rfi_frac=None, outdir = 'data
     d, l, s = unison_shuffled_copies(data, labels, snrs)
     
     np.savez(outdir + name, cands=d, labels=l, snrs=s)
-    return name
-
+    return name, clean_pkl, rfi_pkl, rfi_frac

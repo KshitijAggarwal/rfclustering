@@ -13,7 +13,7 @@ def inject_one(preffile, devicenum, outdir):
     band = bands[np.random.randint(len(bands))]
 
     t0 = time.Time.now().mjd
-    meta = metadata.mock_metadata(t0, t0+5/(24*3600), 20, 11, 32*4*2, 2,
+    meta = metadata.mock_metadata(t0, t0+10/(24*3600), 20, 11, 32*4*2, 2,
                                          5e3, scan=1, datasource='sim',
                                          antconfig=config, band=band)
 
