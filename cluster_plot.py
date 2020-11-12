@@ -116,18 +116,18 @@ def plot_data(data, labels=[], snrs=[], tsne_res=None, title=None, save=False):
     ax[0,0].grid()
 
     ax[0,1].scatter(data[:, 2], data[:, 3], color = cluster_colors, alpha=0.5, s=10*snr)
-    ax[0,1].set_xlabel('time')
-    ax[0,1].set_ylabel('dm')
+    ax[0,1].set_xlabel('dm')
+    ax[0,1].set_ylabel('time')
     ax[0,1].grid()
 
     ax[1,0].scatter(data[:, 0], data[:, 3], color = cluster_colors, alpha=0.5, s=10*snr)
     ax[1,0].set_xlabel('l')
-    ax[1,0].set_ylabel('dm')
+    ax[1,0].set_ylabel('time')
     ax[1,0].grid()
 
     ax[1,1].scatter(data[:, 0], data[:, 2], color = cluster_colors, alpha=0.5, s=10*snr)
     ax[1,1].set_xlabel('l')
-    ax[1,1].set_ylabel('time')
+    ax[1,1].set_ylabel('dm')
     ax[1,1].grid()
 
     if tsne_res:
