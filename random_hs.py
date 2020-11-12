@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run random sampling on the dataset using a specified method",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-a', '--algorithm', help='Clustering algorithm to use (hdbscan, dbscan, kmeans, affinity_prop, '
-                       'meanshift, agglo, sc, optics, birch)', required=True, type=str)
+                       'meanshift, meanshift_norm, agglo, sc, optics, birch)', required=True, type=str)
     parser.add_argument('-o', '--outdir', help='Output directory', required=False, type=str, 
                         default='/hyrule/data/users/kshitij/hdbscan/rfclustering/hs_results/')
     parser.add_argument('-d', '--data', help='path of test data', required=True, type=str)
@@ -77,6 +77,9 @@ if __name__ == '__main__':
     elif values.algorithm == 'meanshift':
         list_of_samples = hs_utils.search_space_ms()
         cluster_function = cluster.MeanShift        
+    elif values.algorithm == 'meanshift_norm':
+        list_of_samples = hs_utils.search_space_ms_norm()
+        cluster_function = cluster.MeanShift
     elif values.algorithm == 'agglo':
         list_of_samples = hs_utils.search_space_agglo()
         cluster_function = cluster.AgglomerativeClustering        

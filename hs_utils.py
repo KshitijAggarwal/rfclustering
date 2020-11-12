@@ -106,6 +106,15 @@ def search_space_ms():
     return get_list_of_samples(param_d, n)
 
 
+def search_space_ms_norm():
+    n = 100 
+    param_d = {}
+    param_d['bandwidth'] = ['float', 1, 10]
+    param_d['bin_seeding'] = ['cat', True, False]
+    param_d['cluster_all'] = ['cat', True, False]
+    return get_list_of_samples(param_d, n)
+
+
 # might break, testing now. Seems unreliable and non reproducible. 
 def search_space_sc():
     n = 1000
