@@ -1,5 +1,5 @@
 import numpy as np
-from clustering_utils import unison_shuffled_copies, get_data
+from utils.clustering_utils import unison_shuffled_copies, get_data
 import os
 
 def save_one(clean_pkl, rfi_pkl=None, rfi_frac=None, downsample=1, outdir = 'dataset/'):

@@ -9,8 +9,8 @@ import numpy as np
 import tqdm
 from sklearn import cluster
 
-import hs_utils
-from clustering_utils import calculate_metric_terms
+from utils import hs_utils
+from utils.clustering_utils import calculate_metric_terms
 
 
 def model(**params):
