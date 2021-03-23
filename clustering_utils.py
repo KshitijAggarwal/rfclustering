@@ -1,11 +1,29 @@
+import logging
+import os
 from copy import deepcopy
+
 import numpy as np
 from rfpipe import candidates
-import glob, logging, os
-from sklearn import metrics
-from cluster_plot import plot_data
+
+from plotting import plot_data
+
 
 def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=False, **kwargs):
+    """
+    Calculate metric values
+
+    :param cand: Candidates from an observation with the four features, snr, and base label (RFI or FRB).
+    :param cluster_function: Function to use for clustering
+    :param plot: To plot the results
+    :param debug: More logging for debugging
+    :param kwargs: Arguments for the clustering function
+    :return:
+        Number of candidates
+        FRB found: True if FRB candidates were recovered
+        homogenity_frbs: homogenity of the FRBs
+        completenes_frbs: completenes of the FRBs
+        v_measure: V measure value
+    """
     if isinstance(cand, dict): 
         d = cand['cands']
         l = cand['labels']
@@ -22,8 +40,7 @@ def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=F
 
     assert cluster_function
 
-    # cluster 
-    
+    # cluster
     clusterer = cluster_function(**kwargs).fit(data)
     tl = l
     cl = clusterer.labels_
@@ -118,6 +135,16 @@ def calculate_metric_terms(cand=None, cluster_function=None, plot=False, debug=F
 
 
 def get_data(pkl, downsample, frac=1, label=1):
+    """
+    Read data from pickle and preprocess for clustering.
+    Also can return a specified fraction of the candidates.
+
+    :param pkl: pickle file with candidate info
+    :param downsample: downsampling factor
+    :param frac: fraction of data to return
+    :param label: label of the candidates (1 for FRB, 0 for RFI)
+    :return:
+    """
     cc = list(candidates.iter_cands(pkl, 'candcollection'))[0]
     logging.info(f'Processing {os.path.split(pkl)[0]}')
     _data = prep_to_cluster(cc, downsample=downsample)
@@ -136,12 +163,29 @@ def get_data(pkl, downsample, frac=1, label=1):
 
 
 def unison_shuffled_copies(a, b, c):
+    """
+    Shuffle three lists consistently.
+
+    :param a:
+    :param b:
+    :param c:
+    :return:
+    """
     assert len(a) == len(b) == len(c)
     p = np.random.permutation(len(a))
     return a[p], b[p], c[p]
 
 
 def find_friends(cc, data, processed_mock, th = 2):
+    """
+    Hacky way to find candidate that are closer together on the sky.
+
+    :param cc:
+    :param data:
+    :param processed_mock:
+    :param th:
+    :return:
+    """
     l_mask = (data[:,0] < processed_mock[0] + th) & (data[:,0] > processed_mock[0] - th)
     m_mask = (data[:,1] < processed_mock[1] + th) & (data[:,1] > processed_mock[1] - th)
     
@@ -166,39 +210,14 @@ def find_friends(cc, data, processed_mock, th = 2):
         logging.info(f'Found {len(friend_names)} simulated candidates out of total {len(cc)} candidates.')
     return friend_names, other_names
 
-
-def get_mocks(cc, downsample = 2):
-    mocks = cc.prefs.simulated_transient
-    st = cc.state
-
-    mocklocs = []
-    processed_mocks = []
-    
-    for mock in mocks:
-        (segment, integration, dm, dt, amp, l0, m0) = mock
-
-        dmind0 = np.abs((np.array(st.dmarr)-dm)).argmin()
-        dtind0 = np.abs((np.array(st.dtarr)*st.inttime-dt)).argmin()
-        integration0 = integration//st.dtarr[dtind0]
-        dtarr = cc.state.dtarr
-        time_ind = np.multiply(integration0, dtarr[dtind0])
-
-        npixx = cc.state.npixx
-        npixy = cc.state.npixy
-        uvres = cc.state.uvres
-        peakx_ind, peaky_ind = cc.state.calcpix(l0, m0, npixx, npixy,
-                                                 uvres)
-
-        processed_mocks.append([peakx_ind//downsample,
-                                peaky_ind//downsample,
-                                dmind0, time_ind])
-
-        mocklocs.append((cc.segment, integration0, dmind0, dtind0, 0))
-        
-    return mocklocs, processed_mocks
-
-
 def prep_to_cluster(cc, downsample=2):
+    """
+    Preprocess the candidates for clustering
+
+    :param cc: Candcollection with candidates
+    :param downsample: Downsampling factor for image indexes
+    :return:
+    """
     cc1 = deepcopy(cc)
     if len(cc1) > 1:
         logging.info(f'Pre-processing data of {len(cc)} candidates for clustering.')

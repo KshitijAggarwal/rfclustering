@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import argparse
+import glob
+import logging
+import os
+
+import numpy as np
 from astropy import time
 from rfpipe import source, metadata, util, pipeline, state
-import numpy as np
-import logging, os, argparse, glob
 
 
 def inject_one(preffile, devicenum, outdir):
